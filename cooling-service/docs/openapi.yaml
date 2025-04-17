@@ -1,0 +1,154 @@
+openapi: 3.0.0
+info:
+  title: Cooling Period Service
+  version: "2.0.0"
+  description: Обновлённый API для реализации механизма периода охлаждения по кредитам
+
+paths:
+  /cooling/register:
+    post:
+      summary: Регистрация кредитного договора с параметрами охлаждения
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [credit_id, client_id, contract_time, cooling_hours]
+              properties:
+                credit_id:
+                  type: string
+                client_id:
+                  type: string
+                contract_time:
+                  type: string
+                  format: date-time
+                cooling_hours:
+                  type: integer
+      responses:
+        '201':
+          description: Кредит зарегистрирован
+        '400':
+          description: Ошибка валидации
+        '500':
+          description: Внутренняя ошибка
+
+  /cooling/validate:
+    get:
+      summary: Проверка действия периода охлаждения
+      parameters:
+        - name: credit_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Результат проверки
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  is_valid:
+                    type: boolean
+                  expires_at:
+                    type: string
+                    format: date-time
+                  message:
+                    type: string
+        '404':
+          description: Кредит не найден
+
+  /cooling/pay:
+    post:
+      summary: Отметить возврат суммы основного долга
+      parameters:
+        - name: credit_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Долг отмечен как возвращён
+        '404':
+          description: Кредит не найден
+
+  /cooling/withdraw:
+    post:
+      summary: Подать заявление на отказ от кредита
+      parameters:
+        - name: credit_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Результат обработки отказа
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [accepted, rejected]
+                  message:
+                    type: string
+        '404':
+          description: Кредит не найден
+
+  /cooling/status:
+    get:
+      summary: Получение статуса отказа
+      parameters:
+        - name: credit_id
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Текущий статус отказа
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  credit_id:
+                    type: string
+                  status:
+                    type: string
+                  updated_at:
+                    type: string
+                    format: date-time
+        '404':
+          description: Кредит не найден
+
+  /cooling/report:
+    get:
+      summary: Отчётность по отказам
+      responses:
+        '200':
+          description: Список всех кредитов с периодом охлаждения
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    credit_id:
+                      type: string
+                    client_id:
+                      type: string
+                    status:
+                      type: string
+                    contract_time:
+                      type: string
+                      format: date-time
+                    updated_at:
+                      type: string
+                      format: date-time

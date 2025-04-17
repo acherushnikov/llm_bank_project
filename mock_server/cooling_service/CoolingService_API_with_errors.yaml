@@ -1,0 +1,193 @@
+openapi: 3.0.0
+info:
+  title: Cooling Period Service API
+  version: "1.0.1"
+  description: API для реализации периода охлаждения по кредитным договорам
+
+paths:
+  /cooling/validate:
+    post:
+      summary: Проверка права на отказ от кредита
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                credit_id:
+                  type: string
+                timestamp:
+                  type: string
+                  format: date-time
+      responses:
+        '200':
+          description: Результат проверки
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  is_valid:
+                    type: boolean
+                  expires_at:
+                    type: string
+                    format: date-time
+                  message:
+                    type: string
+        '400':
+          description: Ошибка валидации запроса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервиса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /cooling/withdraw:
+    post:
+      summary: Подача заявления на отказ от кредита
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                credit_id:
+                  type: string
+                client_id:
+                  type: string
+                submission_time:
+                  type: string
+                  format: date-time
+      responses:
+        '200':
+          description: Заявление принято
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [accepted, rejected]
+                  message:
+                    type: string
+        '400':
+          description: Неверный формат или истекший срок подачи
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка сервиса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /cooling/status:
+    get:
+      summary: Получение текущего статуса отказа по кредиту
+      parameters:
+        - in: query
+          name: credit_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Текущий статус
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  credit_id:
+                    type: string
+                  status:
+                    type: string
+                    enum: [not_requested, pending, completed, expired]
+                  updated_at:
+                    type: string
+                    format: date-time
+        '404':
+          description: Кредит не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /cooling/report:
+    get:
+      summary: Получение отчётности по отказам
+      parameters:
+        - in: query
+          name: date_from
+          required: true
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: date_to
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Список отказов за период
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    credit_id:
+                      type: string
+                    client_id:
+                      type: string
+                    status:
+                      type: string
+                    submitted_at:
+                      type: string
+                      format: date-time
+                    resolved_at:
+                      type: string
+                      format: date-time
+        '400':
+          description: Ошибка в параметрах запроса (например, date_from > date_to)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Внутренняя ошибка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error_code:
+          type: string
+        error_message:
+          type: string
+        details:
+          type: string

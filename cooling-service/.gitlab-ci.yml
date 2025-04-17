@@ -1,0 +1,97 @@
+stages:
+  - prepare
+  - test
+  - analyze
+  - build
+  - deploy
+
+variables:
+  DOCKER_DRIVER: overlay2
+  GOPROXY: http://nexus.local:8081/repository/go-proxy/,direct
+  IMAGE_NAME: nexus.local:8082/cooling-service
+  SONAR_SCANNER_OPTS: "-Dsonar.projectKey=cooling-service -Dsonar.sources=. -Dsonar.host.url=http://sonarqube.local -Dsonar.login=$SONAR_TOKEN"
+
+cache:
+  paths:
+    - go/pkg/mod
+
+before_script:
+  - export PATH=$PATH:/usr/local/go/bin
+  - go version
+
+prepare:
+  stage: prepare
+  script:
+    - echo "Fetching dependencies from Nexus..."
+    - go mod download
+
+unit_test:
+  stage: test
+  script:
+    - echo "Running unit tests..."
+    - go test ./internal/cooling -v
+
+sast:
+  stage: analyze
+  script:
+    - echo "Running SAST scan..."
+    - mkdir -p output
+    - gosec -quiet -fmt=json -out=output/gosec.json ./...
+  artifacts:
+    paths:
+      - output/gosec.json
+
+sonarqube:
+  stage: analyze
+  script:
+    - echo "Running SonarQube analysis..."
+    - sonar-scanner $SONAR_SCANNER_OPTS
+
+build_image:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker login nexus.local:8082 -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
+    - docker build -t $IMAGE_NAME:$CI_COMMIT_SHORT_SHA .
+    - docker push $IMAGE_NAME:$CI_COMMIT_SHORT_SHA
+  only:
+    - main
+
+deploy_dev:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  script:
+    - echo "Deploy to DEV"
+    - kubectl config use-context dev-cluster
+    - helm upgrade --install cooling-service ./helm/cooling-service --set image.repository=$IMAGE_NAME,image.tag=$CI_COMMIT_SHORT_SHA
+  environment:
+    name: dev
+  only:
+    - main
+
+deploy_test:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  script:
+    - echo "Deploy to TEST"
+    - kubectl config use-context test-cluster
+    - helm upgrade --install cooling-service ./helm/cooling-service --set image.repository=$IMAGE_NAME,image.tag=$CI_COMMIT_SHORT_SHA
+  environment:
+    name: test
+  only:
+    - tags
+
+deploy_prod:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  script:
+    - echo "Deploy to PROD"
+    - kubectl config use-context prod-cluster
+    - helm upgrade --install cooling-service ./helm/cooling-service --set image.repository=$IMAGE_NAME,image.tag=$CI_COMMIT_SHORT_SHA
+  environment:
+    name: production
+  when: manual
+  only:
+    - tags

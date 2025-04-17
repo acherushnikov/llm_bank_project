@@ -1,0 +1,10 @@
+# .gitlab/sast.yml
+image: securego/gosec:latest
+
+sast_scan:
+  script:
+    - mkdir -p output
+    - gosec -quiet -fmt=json -out=output/gosec.json ./...
+  artifacts:
+    paths:
+      - output/gosec.json

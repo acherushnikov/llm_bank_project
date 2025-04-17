@@ -1,0 +1,10 @@
+# .gitlab/k8s-setup.yml
+image: bitnami/kubectl:latest
+
+before_script:
+  - echo "$KUBECONFIG_DEV" | base64 -d > ~/.kube/config
+
+deploy_to_cluster:
+  script:
+    - kubectl get nodes
+    - helm upgrade --install cooling-service ./helm/cooling-service --set image.repository=$CI_REGISTRY_IMAGE,image.tag=$CI_COMMIT_SHORT_SHA
