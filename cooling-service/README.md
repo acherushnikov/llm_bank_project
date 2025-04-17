@@ -8,40 +8,36 @@
 cooling-service/
 ├── cmd/server/               # Точка входа (main.go)
 ├── internal/api/             # Роутинг и HTTP-интерфейс
-├── internal/cooling/         # Бизнес-логика периода охлаждения
-├── docs/                     # Swagger UI и OpenAPI спецификация
+├── internal/cooling/         # Бизнес-логика
+├── internal/storage/         # PostgreSQL-хранилище
+├── db/migrations/            # SQL-миграции
+├── docs/                     # Swagger/OpenAPI
+├── helm/                     # Helm Chart для Kubernetes
+├── .kube/                    # Пример Kube config
+├── .gitlab/                  # GitLab CI/CD шаблоны
+├── docker-compose.yml        # Compose c PostgreSQL
 ├── Dockerfile                # Docker-образ
-├── docker-compose.yml        # Композиция контейнеров
-├── go.mod                    # Go-модуль
-└── README.md                 # Инструкция
+├── README.md                 # Инструкция
 ```
+
+---
 
 ## 🚀 Быстрый старт
 
-### 🔧 Запуск в Docker
+### 🔧 Запуск с PostgreSQL
 
 ```bash
 docker-compose up --build
 ```
 
-Сервис будет доступен по адресу: [http://localhost:8080](http://localhost:8080)
-
-### 📚 Swagger UI
-
-Открой `docs/swagger.html` в браузере для просмотра документации.
+- API: [http://localhost:8080](http://localhost:8080)
+- PostgreSQL: `localhost:5432` (user: coolinguser / pass: coolingpass)
 
 ---
 
-## 📌 Основные эндпоинты
+## 📚 Swagger UI
 
-| Метод | Путь                   | Описание |
-|-------|------------------------|----------|
-| POST  | `/cooling/register`    | Регистрация кредита |
-| GET   | `/cooling/validate`    | Проверка периода охлаждения |
-| POST  | `/cooling/pay`         | Отметка возврата суммы |
-| POST  | `/cooling/withdraw`    | Подача заявления на отказ |
-| GET   | `/cooling/status`      | Проверка статуса отказа |
-| GET   | `/cooling/report`      | Отчёт по отказам |
+Открой файл `docs/swagger.html` в браузере или подключи OpenAPI из `docs/openapi.yaml`.
 
 ---
 
@@ -59,13 +55,38 @@ go test ./internal/api
 
 ---
 
-## 📄 OpenAPI спецификация
+## 📄 OpenAPI
 
-Файл: `docs/openapi.yaml`  
-Swagger UI: `docs/swagger.html`
+- Файл спецификации: `docs/openapi.yaml`
+- Swagger UI: `docs/swagger.html`
 
 ---
 
-## ✍️ Авторы и лицензия
+## ⚙️ CI/CD
 
-Разработано в рамках архитектурного проектирования микросервисов (2025). Лицензия MIT.
+GitLab Pipeline (.gitlab-ci.yml):
+
+- prepare → test → analyze → build → deploy
+- интеграция с: Nexus, SonarQube, Kubernetes (Dev/Test/Prod)
+
+---
+
+## 📂 База данных
+
+PostgreSQL таблица: `cooling_periods`  
+Создаётся автоматически при старте сервиса (см. `RunMigrations()`)
+
+---
+
+## 🧭 Kubernetes и Helm
+
+- Helm Chart: `helm/cooling-service/`
+- Манифесты: `k8s/`
+- Поддержка ingress + кастомизация через values.yaml
+
+---
+
+## 📋 Документация
+
+- BRD: Бизнес-требования
+- FSD: Функциональные требования с BPMN-диаграммой

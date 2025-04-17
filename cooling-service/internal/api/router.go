@@ -2,16 +2,20 @@ package api
 
 import (
     "cooling-service/internal/cooling"
+    "cooling-service/internal/storage"
     "net/http"
 )
 
-func SetupRouter() *http.ServeMux {
+var store *storage.PostgresStorage
+
+func InitRouter(s *storage.PostgresStorage) *http.ServeMux {
+    store = s
     mux := http.NewServeMux()
-    mux.HandleFunc("/cooling/register", cooling.RegisterHandler)
-    mux.HandleFunc("/cooling/validate", cooling.ValidateHandler)
-    mux.HandleFunc("/cooling/pay", cooling.PayHandler)
-    mux.HandleFunc("/cooling/withdraw", cooling.WithdrawHandler)
-    mux.HandleFunc("/cooling/status", cooling.StatusHandler)
-    mux.HandleFunc("/cooling/report", cooling.ReportHandler)
+    mux.HandleFunc("/cooling/register", cooling.MakeRegisterHandler(store))
+    mux.HandleFunc("/cooling/validate", cooling.MakeValidateHandler(store))
+    mux.HandleFunc("/cooling/pay", cooling.MakePayHandler(store))
+    mux.HandleFunc("/cooling/withdraw", cooling.MakeWithdrawHandler(store))
+    mux.HandleFunc("/cooling/status", cooling.MakeStatusHandler(store))
+    mux.HandleFunc("/cooling/report", cooling.MakeReportHandler(store))
     return mux
 }
