@@ -8,7 +8,7 @@ WORKDIR /app
 COPY . .
 
 # Сборка приложения
-RUN go build -o cooling-service ./cmd/server
+RUN go build -o ./cooling-service ./cmd/server
 
 # Открываем порт
 EXPOSE 8080
