@@ -12,11 +12,6 @@ cooling-service/
 ├── internal/storage/         # PostgreSQL-хранилище
 ├── db/migrations/            # SQL-миграции
 ├── docs/                     # Swagger/OpenAPI
-├── helm/                     # Helm Chart для Kubernetes
-├── .kube/                    # Пример Kube config
-├── .gitlab/                  # GitLab CI/CD шаблоны
-├── docker-compose.yml        # Compose c PostgreSQL
-├── Dockerfile                # Docker-образ
 ├── README.md                 # Инструкция
 ```
 
@@ -62,27 +57,10 @@ go test ./internal/api
 
 ---
 
-## ⚙️ CI/CD
-
-GitLab Pipeline (.gitlab-ci.yml):
-
-- prepare → test → analyze → build → deploy
-- интеграция с: Nexus, SonarQube, Kubernetes (Dev/Test/Prod)
-
----
-
 ## 📂 База данных
 
 PostgreSQL таблица: `cooling_periods`  
 Создаётся автоматически при старте сервиса (см. `RunMigrations()`)
-
----
-
-## 🧭 Kubernetes и Helm
-
-- Helm Chart: `helm/cooling-service/`
-- Манифесты: `k8s/`
-- Поддержка ingress + кастомизация через values.yaml
 
 ---
 
